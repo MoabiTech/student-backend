@@ -8,21 +8,19 @@ const app = express();
 app.use(cors({ origin: "*" }));
 app.use(express.json());
 
-// ✅ Neon PostgreSQL connection (YOUR PROVIDED URL)
+// ✅ PostgreSQL (Neon)
 const pool = new Pool({
   connectionString: "postgresql://neondb_owner:npg_W2fQCxI4lHBT@ep-shy-dust-anqc2xqs-pooler.c-6.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require",
-  ssl: {
-    rejectUnauthorized: false
-  }
+  ssl: { rejectUnauthorized: false }
 });
 
-// ✅ TEST CONNECTION (optional but useful)
+// ✅ Test connection
 pool.connect()
-  .then(() => console.log("Connected to Neon PostgreSQL ✅"))
-  .catch(err => console.error("Connection error ❌", err));
+  .then(() => console.log("Connected to PostgreSQL ✅"))
+  .catch(err => console.error("DB Error ❌", err));
 
-// ✅ CREATE TABLE IF NOT EXISTS (auto setup)
-const createTable = async () => {
+// ✅ Ensure table exists
+(async () => {
   try {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS students (
@@ -34,13 +32,11 @@ const createTable = async () => {
     `);
     console.log("Table ready ✅");
   } catch (err) {
-    console.error("Error creating table ❌", err);
+    console.error("Table error ❌", err);
   }
-};
+})();
 
-createTable();
-
-// ✅ API: Save student
+// ✅ Save student
 app.post("/add-student", async (req, res) => {
   const { firstName, lastName, phone } = req.body;
 
@@ -50,14 +46,14 @@ app.post("/add-student", async (req, res) => {
       [firstName, lastName, phone]
     );
 
-    res.json({ message: "Saved to PostgreSQL (Neon) ✅" });
+    res.json({ message: "Saved to PostgreSQL ✅" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// ✅ OPTIONAL: Get all students (for testing/dashboard later)
+// ✅ Get students
 app.get("/students", async (req, res) => {
   try {
     const result = await pool.query("SELECT * FROM students ORDER BY id DESC");
@@ -67,9 +63,6 @@ app.get("/students", async (req, res) => {
   }
 });
 
-// ✅ Server start
+// ✅ Start server
 const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT} 🚀`);
-});
+app.listen(PORT, () => console.log(`Server running on port ${PORT} 🚀`));
